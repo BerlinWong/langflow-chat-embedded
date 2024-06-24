@@ -36,7 +36,7 @@ export default function ChatWindow({
   height = 650,
   tweaks,
   sessionId,
-  additional_headers
+  additional_headers,
 }: {
   api_key?: string;
   chat_inputs: Object;
@@ -68,8 +68,7 @@ export default function ChatWindow({
   width?: number;
   height?: number;
   sessionId: React.MutableRefObject<string>;
-  additional_headers?: {[key:string]:string};
-
+  additional_headers?: { [key: string]: string };
 }) {
   const [value, setValue] = useState<string>("");
   const ref = useRef<HTMLDivElement>(null);
@@ -94,9 +93,9 @@ export default function ChatWindow({
     setTimeout(() => {
       inputRef.current?.focus();
     }, 50);
-  }; 
+  };
   const inputElem = inputRef.current;
-  inputElem?.addEventListener('blur', handleBlur);
+  inputElem?.addEventListener("blur", handleBlur);
 
   const [sendingMessage, setSendingMessage] = useState(false);
 
@@ -105,29 +104,39 @@ export default function ChatWindow({
       addMessage({ message: value, isSend: true });
       setSendingMessage(true);
       setValue("");
-      sendMessage(hostUrl, flowId, value, chat_inputs,chat_input_field,sessionId, tweaks,api_key, additional_headers)
+      sendMessage(
+        hostUrl,
+        flowId,
+        value,
+        chat_inputs,
+        chat_input_field,
+        sessionId,
+        tweaks,
+        api_key,
+        additional_headers
+      )
         .then((res) => {
           if (
             res.data &&
-            res.data.result &&
-            Object.keys(res.data.result).length > 0
+            res.data.outputs &&
+            Object.keys(res.data.outputs).length > 0
           ) {
-            if (chat_output_key &&
-            res.data.result[chat_output_key]) {
+            // 这里不知道干啥的先留着吧
+            if (chat_output_key && res.data.outputs[chat_output_key]) {
               updateLastMessage({
                 message: res.data.result[chat_output_key],
                 isSend: false,
               });
-            } else if (
-              Object.keys(res.data.result).length === 1
-            ) {
+            } else if (Object.keys(res.data.outputs).length === 1) {
+              console.log(res.data);
               updateLastMessage({
-                message: Object.values(res.data.result)[0],
+                message: res.data.outputs[0].outputs[0].results.result,
                 isSend: false,
               });
             } else {
               updateLastMessage({
-                message: "Multiple output keys were detected in the response. Please, define the output key to specify the intended response.",
+                message:
+                  "Multiple output keys were detected in the response. Please, define the output key to specify the intended response.",
                 isSend: false,
                 error: true,
               });
@@ -170,7 +179,7 @@ export default function ChatWindow({
       lastMessage.current.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-/* Refocus the User input whenever a new response is returned from the LLM */
+  /* Refocus the User input whenever a new response is returned from the LLM */
 
   useEffect(() => {
     const handleBlur = () => {
@@ -180,13 +189,13 @@ export default function ChatWindow({
       }, 100);
     };
     const inputElem = inputRef.current;
-    inputElem?.addEventListener('blur', handleBlur);
+    inputElem?.addEventListener("blur", handleBlur);
     inputRef.current?.focus();
 
     // Clean up the listener when the component is unmounted
-  
+
     return () => {
-      inputElem?.removeEventListener('blur', handleBlur);
+      inputElem?.removeEventListener("blur", handleBlur);
     };
   }, [messages]);
 
@@ -243,7 +252,11 @@ export default function ChatWindow({
             }}
             type="text"
             disabled={sendingMessage}
-            placeholder={sendingMessage ? (placeholder_sending || "Thinking...") : (placeholder || "Type your message...")}
+            placeholder={
+              sendingMessage
+                ? placeholder_sending || "Thinking..."
+                : placeholder || "Type your message..."
+            }
             style={input_style}
             ref={inputRef}
             className="cl-input-element"
